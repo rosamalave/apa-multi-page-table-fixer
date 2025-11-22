@@ -27,21 +27,26 @@ from src.utils.config import get_config_value, set_config_value
 class SettingsPanel(ctk.CTkFrame):
     """Component for application settings."""
 
-    def __init__(self, parent, **kwargs) -> None:
+    def __init__(self, parent, language_callback: Optional[Callable] = None, **kwargs) -> None:
         """
         Initialize settings panel component.
 
         Args:
             parent: Parent widget
-            **kwargs: Additional frame arguments
+            language_callback: Optional callback function for language changes
+            **kwargs: Additional frame arguments (language_callback will be extracted)
         """
+        # Extract language_callback from kwargs if passed there (before passing to super)
+        if "language_callback" in kwargs:
+            language_callback = kwargs.pop("language_callback")
+        
         # Set default card style with subtle border for shadow effect
         kwargs.setdefault("fg_color", FLUENT_SURFACE)
         kwargs.setdefault("corner_radius", RADIUS_LG)
         kwargs.setdefault("border_width", 1)
         kwargs.setdefault("border_color", FLUENT_BORDER)
         super().__init__(parent, **kwargs)
-        self.language_callback: Optional[Callable] = None
+        self.language_callback: Optional[Callable] = language_callback
 
         self._create_widgets()
         self._load_settings()

@@ -2,7 +2,7 @@
 
 import threading
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 from tkinter import messagebox, filedialog
 
 import customtkinter as ctk
@@ -12,6 +12,7 @@ from src.gui.components.results_panel import ResultsPanel
 from src.gui.components.format_controls import FormatControls
 from src.gui.components.loading_panel import LoadingPanel
 from src.gui.components.settings_panel import SettingsPanel
+from src.gui.components.changes_panel import ChangesPanel
 from src.gui.themes.fluent_theme import (
     apply_fluent_theme,
     FLUENT_PRIMARY,
@@ -35,6 +36,10 @@ from src.utils.exceptions import (
 )
 from src.utils.i18n import set_language, get_text
 from src.utils.config import get_config_value, load_config
+from src.utils.history import (
+    create_history_entry,
+    save_modification_history,
+)
 
 
 class MainWindow(ctk.CTk):
@@ -113,7 +118,7 @@ class MainWindow(ctk.CTk):
         nav_items = [
             ("🏠", get_text("sidebar.home", "Home"), self._show_home, True),
             ("📄", get_text("sidebar.documents", "Documents"), lambda: None, False),
-            ("🔄", get_text("sidebar.history", "History"), lambda: None, False),
+            ("🔄", get_text("sidebar.changes", "Changes"), self._show_changes, False),
             ("⚙️", get_text("sidebar.settings", "Settings"), self._show_settings, False),
             ("❓", get_text("sidebar.help", "Help"), lambda: None, False),
         ]
@@ -222,13 +227,22 @@ class MainWindow(ctk.CTk):
             row=3, column=0, sticky="ew", padx=SPACING_MD, pady=(0, SPACING_LG)
         )
 
-        # Settings panel (hidden by default)
-        self.settings_panel = SettingsPanel(self.scrollable_frame)
-        self.settings_panel.set_language_callback(self._on_language_changed)
+        # Settings panel (hidden by default, in main_frame not scrollable)
+        self.settings_panel = SettingsPanel(
+            self.main_frame,
+            language_callback=self._on_language_changed
+        )
         self.settings_panel.grid(
-            row=0, column=0, sticky="ew", padx=SPACING_MD, pady=SPACING_LG
+            row=0, column=0, sticky="nsew", padx=SPACING_LG, pady=SPACING_LG
         )
         self.settings_panel.grid_remove()  # Hide initially
+
+        # Changes panel (hidden by default, in main_frame not scrollable)
+        self.changes_panel = ChangesPanel(self.main_frame)
+        self.changes_panel.grid(
+            row=0, column=0, sticky="nsew", padx=SPACING_LG, pady=SPACING_LG
+        )
+        self.changes_panel.grid_remove()  # Hide initially
 
     def _reset_scroll_position(self) -> None:
         """Reset scroll position to top."""
@@ -257,8 +271,10 @@ class MainWindow(ctk.CTk):
         # Reset scroll position
         self._reset_scroll_position()
 
-        # Hide settings, show main content
+        # Hide other views, show main content
         self.settings_panel.grid_remove()
+        self.changes_panel.grid_remove()
+        self.scrollable_frame.grid()
         self.file_selector.grid()
         self.results_panel.grid()
         self.format_controls.grid()
@@ -272,12 +288,22 @@ class MainWindow(ctk.CTk):
         # Reset scroll position
         self._reset_scroll_position()
 
-        # Hide main content, show settings
-        self.file_selector.grid_remove()
-        self.results_panel.grid_remove()
-        self.format_controls.grid_remove()
-        self.apply_button.grid_remove()
+        # Hide other views, show settings
+        self.scrollable_frame.grid_remove()
+        self.changes_panel.grid_remove()
         self.settings_panel.grid()
+
+    def _show_changes(self) -> None:
+        """Show changes view."""
+        self.current_view = "changes"
+        self._update_nav_buttons(2)  # Changes is index 2
+
+        # Hide other views, show changes
+        self.scrollable_frame.grid_remove()
+        self.settings_panel.grid_remove()
+        self.changes_panel.grid()
+        # Refresh history when showing
+        self.changes_panel.refresh_history()
 
     def _update_nav_buttons(self, active_index: int) -> None:
         """
@@ -329,7 +355,7 @@ class MainWindow(ctk.CTk):
         nav_texts = [
             get_text("sidebar.home", "Home"),
             get_text("sidebar.documents", "Documents"),
-            get_text("sidebar.history", "History"),
+            get_text("sidebar.changes", "Changes"),
             get_text("sidebar.settings", "Settings"),
             get_text("sidebar.help", "Help"),
         ]
@@ -341,6 +367,7 @@ class MainWindow(ctk.CTk):
         self.file_selector.refresh_texts()
         self.results_panel.refresh_texts()
         self.format_controls.refresh_texts()
+        self.changes_panel.refresh_texts()
         self.settings_panel.refresh_texts()
 
     def _on_file_selected(self, file_path: Path) -> None:
@@ -520,12 +547,72 @@ class MainWindow(ctk.CTk):
                     format_info,
                 )
 
+                # Save to history if successful
+                if success:
+                    self._save_to_history(
+                        str(self.selected_file),
+                        output_path,
+                        modifications,
+                        format_info,
+                    )
+
                 self.after(0, self._on_modification_complete, success)
             except Exception as e:
                 self.after(0, self._on_modification_error, str(e))
 
         thread = threading.Thread(target=apply_thread, daemon=True)
         thread.start()
+
+    def _save_to_history(
+        self,
+        input_file: str,
+        output_file: str,
+        modifications: List,
+        format_info: Optional[FormatInfo],
+    ) -> None:
+        """
+        Save modification to history.
+
+        Args:
+            input_file: Input PDF path
+            output_file: Output PDF path
+            modifications: List of modifications applied
+            format_info: Format information applied
+        """
+        try:
+            # Convert format_info to dict
+            format_dict = None
+            if format_info:
+                format_dict = {
+                    "font_name": format_info.font_name,
+                    "font_size": format_info.font_size,
+                    "is_bold": format_info.is_bold,
+                    "is_italic": format_info.is_italic,
+                    "color": format_info.color,
+                }
+
+            # Convert modifications to list of dicts
+            modifications_detail = []
+            for mod in modifications:
+                modifications_detail.append({
+                    "page": mod.page,
+                    "original_title": mod.original_title,
+                    "modified_title": mod.modified_title,
+                    "repetition_number": mod.repetition_number,
+                    "total_repetitions": mod.total_repetitions,
+                })
+
+            # Create and save history entry
+            history_entry = create_history_entry(
+                input_file=input_file,
+                output_file=output_file,
+                tables_modified=len(modifications),
+                format_applied=format_dict,
+                modifications_detail=modifications_detail,
+            )
+            save_modification_history(history_entry)
+        except Exception:
+            pass  # Silently fail if history can't be saved
 
     def _on_modification_complete(self, success: bool) -> None:
         """
@@ -547,6 +634,9 @@ class MainWindow(ctk.CTk):
                     "PDF modifications applied successfully!"
                 )
             )
+            # Refresh changes panel if visible
+            if self.current_view == "changes":
+                self.changes_panel.refresh_history()
         else:
             messagebox.showwarning(
                 get_text("dialog.modification_warning", "Warning"),
