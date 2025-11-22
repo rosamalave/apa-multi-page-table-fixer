@@ -10,6 +10,7 @@ import customtkinter as ctk
 from src.gui.components.file_selector import FileSelector
 from src.gui.components.results_panel import ResultsPanel
 from src.gui.components.format_controls import FormatControls
+from src.gui.components.loading_panel import LoadingPanel
 from src.gui.themes.fluent_theme import (
     apply_fluent_theme,
     FLUENT_PRIMARY,
@@ -165,6 +166,14 @@ class MainWindow(ctk.CTk):
         self.scrollable_frame.grid(row=0, column=0, sticky="nsew")
         self.scrollable_frame.grid_columnconfigure(0, weight=1)
 
+        # Loading panel (hidden by default)
+        # Place it directly in main_frame to occupy full space
+        self.loading_panel = LoadingPanel(self.main_frame)
+        self.loading_panel.grid(
+            row=0, column=0, sticky="nsew", padx=0, pady=0
+        )
+        self.loading_panel.grid_remove()  # Hide initially
+
         # File selector
         self.file_selector = FileSelector(self.scrollable_frame)
         self.file_selector.set_callback(self._on_file_selected)
@@ -222,19 +231,48 @@ class MainWindow(ctk.CTk):
         Args:
             file_path: Path to PDF file
         """
+        # Hide main content and show loading panel
+        self._show_loading()
+
         # Disable controls during analysis
         self.apply_button.configure(state="disabled")
         self.file_selector.browse_button.configure(state="disabled")
 
+        def progress_callback(
+            message: str, progress: Optional[float] = None
+        ) -> None:
+            """Update progress message and value in UI thread."""
+            self.after(
+                0, self.loading_panel.update_message, message, progress
+            )
+
         def analyze_thread() -> None:
             try:
-                result = self.rule.analyze(str(file_path))
+                result = self.rule.analyze(
+                    str(file_path), progress_callback=progress_callback
+                )
                 self.after(0, self._on_analysis_complete, result)
             except Exception as e:
                 self.after(0, self._on_analysis_error, str(e))
 
         thread = threading.Thread(target=analyze_thread, daemon=True)
         thread.start()
+
+    def _show_loading(self) -> None:
+        """Show loading panel and hide main content."""
+        # Hide scrollable frame (main content)
+        self.scrollable_frame.grid_remove()
+
+        # Show loading panel (occupies full main_frame)
+        self.loading_panel.show()
+
+    def _hide_loading(self) -> None:
+        """Hide loading panel and show main content."""
+        # Hide loading panel
+        self.loading_panel.hide()
+
+        # Show scrollable frame (main content)
+        self.scrollable_frame.grid()
 
     def _on_analysis_complete(self, result: AnalysisResult) -> None:
         """
@@ -243,6 +281,9 @@ class MainWindow(ctk.CTk):
         Args:
             result: AnalysisResult object
         """
+        # Hide loading and show main content
+        self._hide_loading()
+
         self.current_result = result
         self.results_panel.update_results(result)
 
@@ -285,6 +326,9 @@ class MainWindow(ctk.CTk):
         Args:
             error_message: Error message
         """
+        # Hide loading and show main content
+        self._hide_loading()
+
         messagebox.showerror("Analysis Error", f"Error analyzing PDF:\n{error_message}")
         self.results_panel.clear_results()
         self.format_controls.set_detected_format(None)  # Clear detected format
