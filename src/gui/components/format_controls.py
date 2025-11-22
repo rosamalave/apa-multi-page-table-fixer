@@ -243,10 +243,13 @@ class FormatControls(ctk.CTkFrame):
         self.preview_text = ctk.CTkLabel(
             self.controls_frame,
             text=get_text("format.preview.example", "Table Title Example"),
-            font=get_poppins_font(size=11),
+            font=get_poppins_font(size=11),  # Initial font, will be updated
             text_color=FLUENT_TEXT_SECONDARY,
         )
         self.preview_text.pack(anchor="w", pady=(0, SPACING_MD))
+        
+        # Update preview when format changes
+        self._update_preview()
 
         # Initially disable controls
         self._update_controls_state()
@@ -266,6 +269,9 @@ class FormatControls(ctk.CTkFrame):
         Args:
             value: Optional value from dropdown (ignored, we read current state)
         """
+        # Update preview with new format
+        self._update_preview()
+        
         if self.format_callback:
             self.format_callback(self.get_format_info())
 
@@ -282,6 +288,8 @@ class FormatControls(ctk.CTkFrame):
             self.size_dropdown.configure(state=state)
             self.bold_checkbox.configure(state=state)
             self.italic_checkbox.configure(state=state)
+            # Update preview when controls are shown
+            self._update_preview()
 
     def get_format_info(self) -> Optional[FormatInfo]:
         """
@@ -322,6 +330,56 @@ class FormatControls(ctk.CTkFrame):
         except (ValueError, AttributeError):
             # Return None if values are not ready yet
             return None
+
+    def _update_preview(self) -> None:
+        """Update preview text with selected font and size."""
+        if self.keep_original:
+            # Don't update preview if keeping original format
+            return
+        
+        try:
+            # Get current format values
+            font_name = self.font_dropdown.get()
+            size_str = self.size_dropdown.get()
+            
+            if not font_name or not size_str:
+                return
+            
+            # Parse font size
+            size_str = size_str.replace(" pt", "").strip()
+            if not size_str:
+                return
+            
+            font_size = float(size_str)
+            
+            # Get bold and italic states
+            is_bold = self.bold_var.get()
+            is_italic = self.italic_var.get()
+            
+            # Determine font weight
+            weight = "bold" if is_bold else "normal"
+            
+            # Create font with selected family and size
+            # Use the selected font family, not Poppins
+            try:
+                preview_font = ctk.CTkFont(
+                    family=font_name,
+                    size=int(font_size),
+                    weight=weight,
+                    slant="italic" if is_italic else "roman",
+                )
+            except Exception:
+                # Fallback to Poppins if font not available
+                preview_font = get_poppins_font(
+                    size=int(font_size),
+                    weight=weight
+                )
+            
+            # Update preview label with new font
+            self.preview_text.configure(font=preview_font)
+        except (ValueError, AttributeError):
+            # If values are not ready, use default Poppins font
+            self.preview_text.configure(font=get_poppins_font(size=11))
 
     def set_format_callback(self, callback: Callable) -> None:
         """
@@ -419,4 +477,6 @@ class FormatControls(ctk.CTkFrame):
         self.preview_text.configure(
             text=get_text("format.preview.example", "Table Title Example")
         )
+        # Update preview font when refreshing texts
+        self._update_preview()
 
