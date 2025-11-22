@@ -4,6 +4,7 @@ import threading
 from pathlib import Path
 from typing import Optional, List
 from tkinter import messagebox, filedialog
+import tkinter as tk
 
 import customtkinter as ctk
 
@@ -56,6 +57,9 @@ class MainWindow(ctk.CTk):
         self.title(get_text("app.title", "PDF Table Title Fixer"))
         self.geometry("1000x700")
         self.minsize(800, 600)
+        
+        # Set window icon (must be done before mainloop)
+        self._set_window_icon()
 
         # Configure grid weights
         self.grid_columnconfigure(1, weight=1)
@@ -77,6 +81,51 @@ class MainWindow(ctk.CTk):
         # Create UI
         self._create_sidebar()
         self._create_main_content()
+
+    def _set_window_icon(self) -> None:
+        """Set window icon from image file."""
+        try:
+            # For Windows: Set AppUserModelID to ensure icon shows in taskbar
+            try:
+                import ctypes
+                # Set unique app ID for Windows taskbar
+                app_id = 'rosamalave.apa-multi-page-table-fixer.1.0'
+                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+                    app_id
+                )
+            except Exception:
+                pass  # Not Windows or ctypes not available
+            
+            # Get the path to the icon file
+            # Use logo_apa_fixerr.ico (sharper quality)
+            ico_path = Path(__file__).parent / "img" / "logo_apa_fixerr.ico"
+            png_path = Path(__file__).parent / "img" / "logo_apa_fixer.png"
+            
+            # Try .ico first (better for Windows taskbar and window)
+            if ico_path.exists():
+                # Use absolute path for iconbitmap (required for Windows)
+                icon_path_abs = str(ico_path.absolute())
+                # Use iconbitmap for .ico files (works for taskbar and window)
+                # Access underlying Tk widget for CustomTkinter
+                try:
+                    # Get the underlying Tk window
+                    tk_window = self._root
+                    if tk_window:
+                        tk_window.iconbitmap(icon_path_abs)
+                    else:
+                        self.iconbitmap(icon_path_abs)
+                except Exception:
+                    # Fallback to direct call
+                    self.iconbitmap(icon_path_abs)
+            elif png_path.exists():
+                # Fallback to PNG for window icon only
+                icon_image = tk.PhotoImage(file=str(png_path))
+                self.iconphoto(False, icon_image)
+                # Keep reference to prevent garbage collection
+                self.icon_image = icon_image
+        except Exception:
+            # Silently fail if icon cannot be loaded
+            pass
 
     def _create_sidebar(self) -> None:
         """Create left sidebar navigation."""
