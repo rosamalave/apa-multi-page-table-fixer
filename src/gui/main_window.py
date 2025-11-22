@@ -230,10 +230,32 @@ class MainWindow(ctk.CTk):
         )
         self.settings_panel.grid_remove()  # Hide initially
 
+    def _reset_scroll_position(self) -> None:
+        """Reset scroll position to top."""
+        def reset_scroll() -> None:
+            """Reset scroll after widget update."""
+            try:
+                # CTkScrollableFrame uses _parent_canvas internally
+                # Reset scroll position to top (0.0 = top, 1.0 = bottom)
+                if hasattr(self.scrollable_frame, '_parent_canvas'):
+                    canvas = self.scrollable_frame._parent_canvas
+                    if canvas:
+                        canvas.yview_moveto(0.0)
+            except (AttributeError, Exception):
+                pass
+        
+        # Update widget first, then reset scroll
+        self.scrollable_frame.update_idletasks()
+        # Use after to ensure scroll reset happens after layout update
+        self.after(10, reset_scroll)
+
     def _show_home(self) -> None:
         """Show home view."""
         self.current_view = "home"
         self._update_nav_buttons(0)  # Home is index 0
+
+        # Reset scroll position
+        self._reset_scroll_position()
 
         # Hide settings, show main content
         self.settings_panel.grid_remove()
@@ -246,6 +268,9 @@ class MainWindow(ctk.CTk):
         """Show settings view."""
         self.current_view = "settings"
         self._update_nav_buttons(3)  # Settings is index 3
+
+        # Reset scroll position
+        self._reset_scroll_position()
 
         # Hide main content, show settings
         self.file_selector.grid_remove()
