@@ -14,6 +14,7 @@ from src.gui.components.format_controls import FormatControls
 from src.gui.components.loading_panel import LoadingPanel
 from src.gui.components.settings_panel import SettingsPanel
 from src.gui.components.changes_panel import ChangesPanel
+from src.gui.components.help_panel import HelpPanel
 from src.gui.themes.fluent_theme import (
     apply_fluent_theme,
     FLUENT_PRIMARY,
@@ -166,10 +167,9 @@ class MainWindow(ctk.CTk):
         # Navigation buttons
         nav_items = [
             ("🏠", get_text("sidebar.home", "Home"), self._show_home, True),
-            ("📄", get_text("sidebar.documents", "Documents"), lambda: None, False),
             ("🔄", get_text("sidebar.changes", "Changes"), self._show_changes, False),
             ("⚙️", get_text("sidebar.settings", "Settings"), self._show_settings, False),
-            ("❓", get_text("sidebar.help", "Help"), lambda: None, False),
+            ("❓", get_text("sidebar.help", "Help"), self._show_help, False),
         ]
 
         self.nav_buttons = []
@@ -293,6 +293,13 @@ class MainWindow(ctk.CTk):
         )
         self.changes_panel.grid_remove()  # Hide initially
 
+        # Help panel (hidden by default, in main_frame not scrollable)
+        self.help_panel = HelpPanel(self.main_frame)
+        self.help_panel.grid(
+            row=0, column=0, sticky="nsew", padx=SPACING_LG, pady=SPACING_LG
+        )
+        self.help_panel.grid_remove()  # Hide initially
+
     def _reset_scroll_position(self) -> None:
         """Reset scroll position to top."""
         def reset_scroll() -> None:
@@ -323,6 +330,7 @@ class MainWindow(ctk.CTk):
         # Hide other views, show main content
         self.settings_panel.grid_remove()
         self.changes_panel.grid_remove()
+        self.help_panel.grid_remove()
         self.scrollable_frame.grid()
         self.file_selector.grid()
         self.results_panel.grid()
@@ -332,7 +340,7 @@ class MainWindow(ctk.CTk):
     def _show_settings(self) -> None:
         """Show settings view."""
         self.current_view = "settings"
-        self._update_nav_buttons(3)  # Settings is index 3
+        self._update_nav_buttons(2)  # Settings is index 2
 
         # Reset scroll position
         self._reset_scroll_position()
@@ -340,19 +348,35 @@ class MainWindow(ctk.CTk):
         # Hide other views, show settings
         self.scrollable_frame.grid_remove()
         self.changes_panel.grid_remove()
+        self.help_panel.grid_remove()
         self.settings_panel.grid()
 
     def _show_changes(self) -> None:
         """Show changes view."""
         self.current_view = "changes"
-        self._update_nav_buttons(2)  # Changes is index 2
+        self._update_nav_buttons(1)  # Changes is index 1
 
         # Hide other views, show changes
         self.scrollable_frame.grid_remove()
         self.settings_panel.grid_remove()
+        self.help_panel.grid_remove()
         self.changes_panel.grid()
         # Refresh history when showing
         self.changes_panel.refresh_history()
+
+    def _show_help(self) -> None:
+        """Show help view."""
+        self.current_view = "help"
+        self._update_nav_buttons(3)  # Help is index 3
+
+        # Reset scroll position
+        self._reset_scroll_position()
+
+        # Hide other views, show help
+        self.scrollable_frame.grid_remove()
+        self.settings_panel.grid_remove()
+        self.changes_panel.grid_remove()
+        self.help_panel.grid()
 
     def _update_nav_buttons(self, active_index: int) -> None:
         """
@@ -403,14 +427,13 @@ class MainWindow(ctk.CTk):
         # Update navigation buttons
         nav_texts = [
             get_text("sidebar.home", "Home"),
-            get_text("sidebar.documents", "Documents"),
             get_text("sidebar.changes", "Changes"),
             get_text("sidebar.settings", "Settings"),
             get_text("sidebar.help", "Help"),
         ]
+        icons = ["🏠", "🔄", "⚙️", "❓"]
         for idx, btn in enumerate(self.nav_buttons):
-            icon = ["🏠", "📄", "🔄", "⚙️", "❓"][idx]
-            btn.configure(text=f"{icon}  {nav_texts[idx]}")
+            btn.configure(text=f"{icons[idx]}  {nav_texts[idx]}")
 
         # Update all components
         self.file_selector.refresh_texts()
@@ -418,6 +441,7 @@ class MainWindow(ctk.CTk):
         self.format_controls.refresh_texts()
         self.changes_panel.refresh_texts()
         self.settings_panel.refresh_texts()
+        self.help_panel.refresh_texts()
 
     def _on_file_selected(self, file_path: Path) -> None:
         """
