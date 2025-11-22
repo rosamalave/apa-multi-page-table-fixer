@@ -11,6 +11,7 @@ from src.gui.components.file_selector import FileSelector
 from src.gui.components.results_panel import ResultsPanel
 from src.gui.components.format_controls import FormatControls
 from src.gui.components.loading_panel import LoadingPanel
+from src.gui.components.settings_panel import SettingsPanel
 from src.gui.themes.fluent_theme import (
     apply_fluent_theme,
     FLUENT_PRIMARY,
@@ -32,6 +33,8 @@ from src.utils.exceptions import (
     ModificationError,
     ValidationError,
 )
+from src.utils.i18n import set_language, get_text
+from src.utils.config import get_config_value, load_config
 
 
 class MainWindow(ctk.CTk):
@@ -45,7 +48,7 @@ class MainWindow(ctk.CTk):
         apply_fluent_theme(self)
 
         # Window configuration
-        self.title("PDF Table Title Fixer")
+        self.title(get_text("app.title", "PDF Table Title Fixer"))
         self.geometry("1000x700")
         self.minsize(800, 600)
 
@@ -59,6 +62,12 @@ class MainWindow(ctk.CTk):
         # Current state
         self.current_result: Optional[AnalysisResult] = None
         self.selected_file: Optional[Path] = None
+        self.current_view = "home"  # Current view: "home" or "settings"
+
+        # Load configuration and set language
+        config = load_config()
+        language = config.get("language", "en")
+        set_language(language)
 
         # Create UI
         self._create_sidebar()
@@ -102,11 +111,11 @@ class MainWindow(ctk.CTk):
 
         # Navigation buttons
         nav_items = [
-            ("🏠", "Home", self._show_home, True),
-            ("📄", "Documents", lambda: None, False),
-            ("🔄", "History", lambda: None, False),
-            ("⚙️", "Settings", lambda: None, False),
-            ("❓", "Help", lambda: None, False),
+            ("🏠", get_text("sidebar.home", "Home"), self._show_home, True),
+            ("📄", get_text("sidebar.documents", "Documents"), lambda: None, False),
+            ("🔄", get_text("sidebar.history", "History"), lambda: None, False),
+            ("⚙️", get_text("sidebar.settings", "Settings"), self._show_settings, False),
+            ("❓", get_text("sidebar.help", "Help"), lambda: None, False),
         ]
 
         self.nav_buttons = []
@@ -133,22 +142,25 @@ class MainWindow(ctk.CTk):
         )
         help_frame.pack(side="bottom", fill="x", padx=SPACING_MD, pady=SPACING_MD)
 
-        help_title = ctk.CTkLabel(
+        self.help_title = ctk.CTkLabel(
             help_frame,
-            text="Need Help?",
+            text=get_text("sidebar.need_help", "Need Help?"),
             font=ctk.CTkFont(size=12, weight="bold"),
             text_color="white",
         )
-        help_title.pack(pady=(SPACING_MD, SPACING_MD), padx=SPACING_MD)
+        self.help_title.pack(pady=(SPACING_MD, SPACING_MD), padx=SPACING_MD)
 
-        help_text = ctk.CTkLabel(
+        self.help_text = ctk.CTkLabel(
             help_frame,
-            text="View our documentation for guides and tutorials.",
+            text=get_text(
+                "sidebar.help_text",
+                "View our documentation for guides and tutorials."
+            ),
             font=get_poppins_font(size=10),
             text_color="white",
             wraplength=180,
         )
-        help_text.pack(pady=(0, SPACING_MD), padx=SPACING_MD)
+        self.help_text.pack(pady=(0, SPACING_MD), padx=SPACING_MD)
 
     def _create_main_content(self) -> None:
         """Create main content area with scrollbar."""
@@ -197,7 +209,7 @@ class MainWindow(ctk.CTk):
         # Apply button
         self.apply_button = ctk.CTkButton(
             self.scrollable_frame,
-            text="Apply Modifications",
+            text=get_text("button.apply", "Apply Modifications"),
             command=self._apply_modifications,
             fg_color=FLUENT_PRIMARY,
             hover_color=FLUENT_SECONDARY,
@@ -210,9 +222,101 @@ class MainWindow(ctk.CTk):
             row=3, column=0, sticky="ew", padx=SPACING_MD, pady=(0, SPACING_LG)
         )
 
+        # Settings panel (hidden by default)
+        self.settings_panel = SettingsPanel(self.scrollable_frame)
+        self.settings_panel.set_language_callback(self._on_language_changed)
+        self.settings_panel.grid(
+            row=0, column=0, sticky="ew", padx=SPACING_MD, pady=SPACING_LG
+        )
+        self.settings_panel.grid_remove()  # Hide initially
+
     def _show_home(self) -> None:
-        """Show home view (currently same as main)."""
-        pass
+        """Show home view."""
+        self.current_view = "home"
+        self._update_nav_buttons(0)  # Home is index 0
+
+        # Hide settings, show main content
+        self.settings_panel.grid_remove()
+        self.file_selector.grid()
+        self.results_panel.grid()
+        self.format_controls.grid()
+        self.apply_button.grid()
+
+    def _show_settings(self) -> None:
+        """Show settings view."""
+        self.current_view = "settings"
+        self._update_nav_buttons(3)  # Settings is index 3
+
+        # Hide main content, show settings
+        self.file_selector.grid_remove()
+        self.results_panel.grid_remove()
+        self.format_controls.grid_remove()
+        self.apply_button.grid_remove()
+        self.settings_panel.grid()
+
+    def _update_nav_buttons(self, active_index: int) -> None:
+        """
+        Update navigation buttons active state.
+
+        Args:
+            active_index: Index of active button
+        """
+        for idx, btn in enumerate(self.nav_buttons):
+            is_active = idx == active_index
+            btn.configure(
+                fg_color=FLUENT_PRIMARY if is_active else "transparent",
+                hover_color=FLUENT_SECONDARY if is_active else FLUENT_HOVER,
+                text_color=FLUENT_TEXT_PRIMARY if not is_active else "white",
+            )
+
+    def _on_language_changed(self, language_code: str) -> None:
+        """
+        Handle language change.
+
+        Args:
+            language_code: New language code
+        """
+        # Update all UI texts
+        self._refresh_ui_texts()
+
+    def _refresh_ui_texts(self) -> None:
+        """Refresh all UI texts after language change."""
+        # Update window title
+        self.title(get_text("app.title", "PDF Table Title Fixer"))
+
+        # Update apply button
+        self.apply_button.configure(
+            text=get_text("button.apply", "Apply Modifications")
+        )
+
+        # Update sidebar help section
+        self.help_title.configure(
+            text=get_text("sidebar.need_help", "Need Help?")
+        )
+        self.help_text.configure(
+            text=get_text(
+                "sidebar.help_text",
+                "View our documentation for guides and tutorials."
+            )
+        )
+
+        # Update navigation buttons
+        nav_texts = [
+            get_text("sidebar.home", "Home"),
+            get_text("sidebar.documents", "Documents"),
+            get_text("sidebar.history", "History"),
+            get_text("sidebar.settings", "Settings"),
+            get_text("sidebar.help", "Help"),
+        ]
+        for idx, btn in enumerate(self.nav_buttons):
+            icon = ["🏠", "📄", "🔄", "⚙️", "❓"][idx]
+            btn.configure(text=f"{icon}  {nav_texts[idx]}")
+
+        # Update all components
+        self.file_selector.refresh_texts()
+        self.results_panel.refresh_texts()
+        self.format_controls.refresh_texts()
+        self.settings_panel.refresh_texts()
 
     def _on_file_selected(self, file_path: Path) -> None:
         """
@@ -329,7 +433,13 @@ class MainWindow(ctk.CTk):
         # Hide loading and show main content
         self._hide_loading()
 
-        messagebox.showerror("Analysis Error", f"Error analyzing PDF:\n{error_message}")
+        messagebox.showerror(
+            get_text("dialog.analysis_error", "Analysis Error"),
+            get_text(
+                "dialog.analysis_error.message",
+                "Error analyzing PDF:\n{message}"
+            ).format(message=error_message)
+        )
         self.results_panel.clear_results()
         self.format_controls.set_detected_format(None)  # Clear detected format
         self.apply_button.configure(state="disabled")
@@ -366,7 +476,10 @@ class MainWindow(ctk.CTk):
         format_info = self.format_controls.get_format_info()
 
         # Disable button during processing
-        self.apply_button.configure(state="disabled", text="Processing...")
+        self.apply_button.configure(
+            state="disabled",
+            text=get_text("button.processing", "Processing...")
+        )
 
         def apply_thread() -> None:
             try:
@@ -397,18 +510,25 @@ class MainWindow(ctk.CTk):
             success: Whether modification was successful
         """
         self.apply_button.configure(
-            state="normal", text="Apply Modifications"
+            state="normal",
+            text=get_text("button.apply", "Apply Modifications")
         )
 
         if success:
             messagebox.showinfo(
-                "Success",
-                "PDF modifications applied successfully!"
+                get_text("dialog.modification_success", "Success"),
+                get_text(
+                    "dialog.modification_success.message",
+                    "PDF modifications applied successfully!"
+                )
             )
         else:
             messagebox.showwarning(
-                "Warning",
-                "Some modifications may not have been applied."
+                get_text("dialog.modification_warning", "Warning"),
+                get_text(
+                    "dialog.modification_warning.message",
+                    "Some modifications may not have been applied."
+                )
             )
 
     def _on_modification_error(self, error_message: str) -> None:
@@ -419,10 +539,14 @@ class MainWindow(ctk.CTk):
             error_message: Error message
         """
         self.apply_button.configure(
-            state="normal", text="Apply Modifications"
+            state="normal",
+            text=get_text("button.apply", "Apply Modifications")
         )
         messagebox.showerror(
-            "Modification Error",
-            f"Error modifying PDF:\n{error_message}"
+            get_text("dialog.modification_error", "Modification Error"),
+            get_text(
+                "dialog.modification_error.message",
+                "Error modifying PDF:\n{message}"
+            ).format(message=error_message)
         )
 

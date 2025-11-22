@@ -18,6 +18,7 @@ from src.gui.themes.fluent_theme import (
 )
 from src.gui.themes.fonts import get_poppins_font
 from src.core.models import AnalysisResult
+from src.utils.i18n import get_text
 
 
 class ResultsPanel(ctk.CTkFrame):
@@ -56,7 +57,7 @@ class ResultsPanel(ctk.CTkFrame):
         # Title
         self.title_label = ctk.CTkLabel(
             title_frame,
-            text="Analysis Results",
+            text=get_text("results.title", "Analysis Results"),
             font=get_poppins_font(size=18, weight="bold"),
             text_color=FLUENT_TEXT_PRIMARY,
         )
@@ -65,7 +66,7 @@ class ResultsPanel(ctk.CTkFrame):
         # Subtitle
         self.subtitle_label = ctk.CTkLabel(
             self,
-            text="Document analysis summary",
+            text=get_text("results.subtitle", "Document analysis summary"),
             font=get_poppins_font(size=12),
             text_color=FLUENT_TEXT_SECONDARY,
         )
@@ -95,7 +96,7 @@ class ResultsPanel(ctk.CTkFrame):
 
         self.total_text_label = ctk.CTkLabel(
             self.total_card,
-            text="Tables Detected",
+            text=get_text("results.tables_detected", "Tables Detected"),
             font=get_poppins_font(size=14),
             text_color=FLUENT_TEXT_SECONDARY,
         )
@@ -125,7 +126,7 @@ class ResultsPanel(ctk.CTkFrame):
 
         self.modify_text_label = ctk.CTkLabel(
             self.modify_card,
-            text="Tables to Modify",
+            text=get_text("results.tables_to_modify", "Tables to Modify"),
             font=get_poppins_font(size=12),
             text_color=FLUENT_TEXT_SECONDARY,
         )
@@ -163,7 +164,7 @@ class ResultsPanel(ctk.CTkFrame):
 
         self.format_text_label = ctk.CTkLabel(
             self.format_card,
-            text="Format Uniform",
+            text=get_text("results.format_uniform", "Format Uniform"),
             font=get_poppins_font(size=12),
             text_color=FLUENT_TEXT_SECONDARY,
         )
@@ -171,7 +172,7 @@ class ResultsPanel(ctk.CTkFrame):
 
         self.format_detail_label = ctk.CTkLabel(
             self.format_card,
-            text="All tables consistent",
+            text=get_text("results.all_consistent", "All tables consistent"),
             font=get_poppins_font(size=11),
             text_color=FLUENT_TEXT_SECONDARY,
         )
@@ -202,17 +203,19 @@ class ResultsPanel(ctk.CTkFrame):
         # Update format uniform status
         if result.format_uniform:
             self.format_status_label.configure(
-                text="Yes", text_color=FLUENT_SUCCESS
+                text=get_text("results.yes", "Yes"),
+                text_color=FLUENT_SUCCESS
             )
             self.format_detail_label.configure(
-                text="All tables consistent"
+                text=get_text("results.all_consistent", "All tables consistent")
             )
         else:
             self.format_status_label.configure(
-                text="No", text_color="#FF6F00"
+                text=get_text("results.no", "No"),
+                text_color="#FF6F00"
             )
             self.format_detail_label.configure(
-                text="Formats vary"
+                text=get_text("results.formats_vary", "Formats vary")
             )
 
     def clear_results(self) -> None:
@@ -221,9 +224,36 @@ class ResultsPanel(ctk.CTkFrame):
         self.modify_number_label.configure(text="0")
         self.progress_bar.set(0)
         self.format_status_label.configure(
-            text="Yes", text_color=FLUENT_SUCCESS
+            text=get_text("results.yes", "Yes"),
+            text_color=FLUENT_SUCCESS
         )
         self.format_detail_label.configure(
-            text="All tables consistent"
+            text=get_text("results.all_consistent", "All tables consistent")
         )
+
+    def refresh_texts(self) -> None:
+        """Refresh all texts after language change."""
+        self.title_label.configure(
+            text=get_text("results.title", "Analysis Results")
+        )
+        self.subtitle_label.configure(
+            text=get_text("results.subtitle", "Document analysis summary")
+        )
+        self.total_text_label.configure(
+            text=get_text("results.tables_detected", "Tables Detected")
+        )
+        self.modify_text_label.configure(
+            text=get_text("results.tables_to_modify", "Tables to Modify")
+        )
+        self.format_text_label.configure(
+            text=get_text("results.format_uniform", "Format Uniform")
+        )
+        # Update format detail if it's in default state
+        if self.format_status_label.cget("text") in [
+            get_text("results.yes", "Yes"),
+            "Yes"
+        ]:
+            self.format_detail_label.configure(
+                text=get_text("results.all_consistent", "All tables consistent")
+            )
 

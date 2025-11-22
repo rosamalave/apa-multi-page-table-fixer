@@ -16,6 +16,7 @@ from src.gui.themes.fluent_theme import (
     RADIUS_MD,
 )
 from src.gui.themes.fonts import get_poppins_font
+from src.utils.i18n import get_text
 
 
 class LoadingPanel(ctk.CTkFrame):
@@ -37,7 +38,9 @@ class LoadingPanel(ctk.CTkFrame):
         self.grid_rowconfigure(0, weight=1)
 
         # Current message and progress
-        self.current_message = "Initializing analysis..."
+        self.current_message = get_text(
+            "loading.reading", "Reading PDF document..."
+        )
         self.current_progress = 0  # 0-100
 
         # Create centered container
@@ -217,6 +220,11 @@ class LoadingPanel(ctk.CTkFrame):
         self.grid()
         # Reset progress to 0 when showing
         self.update_progress(0)
+        # Update initial message
+        self.current_message = get_text(
+            "loading.reading", "Reading PDF document..."
+        )
+        self.message_label.configure(text=self.current_message)
 
     def hide(self) -> None:
         """Hide loading panel."""

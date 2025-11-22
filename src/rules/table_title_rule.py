@@ -1,6 +1,6 @@
 """APA rule for table title numbering across pages."""
 
-from typing import List, Optional, Callable, Union
+from typing import List, Optional, Callable
 
 from src.core.analyzer import PDFAnalyzer
 from src.core.formatter import FormatAnalyzer
@@ -12,6 +12,7 @@ from src.core.models import (
     FormatInfo,
 )
 from src.rules.base_rule import BaseRule
+from src.utils.i18n import get_text
 
 
 class TableTitleRule(BaseRule):
@@ -50,14 +51,19 @@ class TableTitleRule(BaseRule):
             AnalysisResult with detected issues
         """
         if progress_callback:
-            progress_callback("Reading PDF document...", 10)
+            progress_callback(
+                get_text("loading.reading", "Reading PDF document..."), 10
+            )
 
         # Detect all tables
         tables = self.analyzer.analyze(pdf_path)
 
         if progress_callback:
             progress_callback(
-                f"Found {len(tables)} table(s). Analyzing repetitions...",
+                get_text(
+                    "loading.found_tables",
+                    "Found {count} table(s). Analyzing repetitions..."
+                ).format(count=len(tables)),
                 30,
             )
 
@@ -65,7 +71,9 @@ class TableTitleRule(BaseRule):
         repetitions = self.analyzer.find_consecutive_repetitions(tables)
 
         if progress_callback:
-            progress_callback("Creating modifications...", 50)
+            progress_callback(
+                get_text("loading.creating", "Creating modifications..."), 50
+            )
 
         # Create modifications
         modifications = self._create_modifications(
@@ -73,13 +81,25 @@ class TableTitleRule(BaseRule):
         )
 
         if progress_callback:
-            progress_callback("Extracting format information...", 80)
+            progress_callback(
+                get_text(
+                    "loading.extracting",
+                    "Extracting format information..."
+                ),
+                80,
+            )
 
         # Extract format information
         format_info = self._extract_format_info(tables, pdf_path)
 
         if progress_callback:
-            progress_callback("Checking format uniformity...", 90)
+            progress_callback(
+                get_text(
+                    "loading.checking",
+                    "Checking format uniformity..."
+                ),
+                90,
+            )
 
         # Check uniformity (this can be slow, so we'll optimize it)
         format_uniform = self._check_format_uniformity(
@@ -87,7 +107,9 @@ class TableTitleRule(BaseRule):
         )
 
         if progress_callback:
-            progress_callback("Analysis complete!", 100)
+            progress_callback(
+                get_text("loading.complete", "Analysis complete!"), 100
+            )
 
         return AnalysisResult(
             all_tables=tables,
@@ -126,7 +148,12 @@ class TableTitleRule(BaseRule):
                 # Calculate progress between 50% and 80%
                 progress = 50 + (rep_idx / total_repetitions) * 30
                 progress_callback(
-                    f"Processing table {rep_idx + 1}/{total_repetitions}...",
+                    get_text(
+                        "loading.processing",
+                        "Processing table {current}/{total}..."
+                    ).format(
+                        current=rep_idx + 1, total=total_repetitions
+                    ),
                     progress,
                 )
             if count > 1:
@@ -230,7 +257,10 @@ class TableTitleRule(BaseRule):
             if progress_callback and idx % 5 == 0:
                 progress = 90 + int((idx / sample_size) * 10)
                 progress_callback(
-                    f"Checking format uniformity... ({idx + 1}/{sample_size})",
+                    get_text(
+                        "loading.checking_progress",
+                        "Checking format uniformity... ({current}/{total})"
+                    ).format(current=idx + 1, total=sample_size),
                     progress,
                 )
 

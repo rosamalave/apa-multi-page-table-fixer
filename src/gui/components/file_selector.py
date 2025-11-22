@@ -20,6 +20,7 @@ from src.gui.themes.fluent_theme import (
 from src.gui.themes.fonts import get_poppins_font
 from src.utils.validators import validate_pdf_path
 from src.utils.exceptions import ValidationError
+from src.utils.i18n import get_text
 
 
 class FileSelector(ctk.CTkFrame):
@@ -61,7 +62,7 @@ class FileSelector(ctk.CTkFrame):
         # Title
         self.title_label = ctk.CTkLabel(
             title_frame,
-            text="Select PDF File",
+            text=get_text("file_selector.title", "Select PDF File"),
             font=get_poppins_font(size=18, weight="bold"),
             text_color=FLUENT_TEXT_PRIMARY,
         )
@@ -70,7 +71,10 @@ class FileSelector(ctk.CTkFrame):
         # Instructions
         self.instructions_label = ctk.CTkLabel(
             self,
-            text="Choose a PDF file to analyze and modify table titles",
+            text=get_text(
+                "file_selector.description",
+                "Choose a PDF file to analyze and modify table titles"
+            ),
             font=get_poppins_font(size=12),
             text_color=FLUENT_TEXT_SECONDARY,
         )
@@ -120,7 +124,7 @@ class FileSelector(ctk.CTkFrame):
         # Browse button
         self.browse_button = ctk.CTkButton(
             self.upload_content,
-            text="Browse Files",
+            text=get_text("file_selector.browse", "Browse Files"),
             command=self._browse_file,
             fg_color=FLUENT_PRIMARY,
             hover_color="#106EBE",
@@ -134,7 +138,10 @@ class FileSelector(ctk.CTkFrame):
         # Drag and drop text
         self.drag_text = ctk.CTkLabel(
             self.upload_content,
-            text="or drag and drop your PDF file here",
+            text=get_text(
+                "file_selector.drag_drop",
+                "or drag and drop your PDF file here"
+            ),
             font=get_poppins_font(size=11),
             text_color=FLUENT_TEXT_SECONDARY,
         )
@@ -143,7 +150,10 @@ class FileSelector(ctk.CTkFrame):
         # File format info
         self.format_info = ctk.CTkLabel(
             self.upload_content,
-            text="Supported format: PDF (Max 50MB)",
+            text=get_text(
+                "file_selector.format_info",
+                "Supported format: PDF (Max 50MB)"
+            ),
             font=get_poppins_font(size=10),
             text_color=FLUENT_TEXT_SECONDARY,
         )
@@ -163,7 +173,7 @@ class FileSelector(ctk.CTkFrame):
 
         self.file_path_label = ctk.CTkLabel(
             self.status_frame,
-            text="No file selected",
+            text=get_text("file_selector.no_file", "No file selected"),
             font=get_poppins_font(size=11),
             text_color=FLUENT_TEXT_SECONDARY,
             anchor="w",
@@ -173,7 +183,7 @@ class FileSelector(ctk.CTkFrame):
     def _browse_file(self) -> None:
         """Open file dialog to select PDF."""
         file_path = filedialog.askopenfilename(
-            title="Select PDF File",
+            title=get_text("file_selector.dialog_title", "Select PDF File"),
             filetypes=[("PDF files", "*.pdf"), ("All files", "*.*")],
         )
 
@@ -192,21 +202,56 @@ class FileSelector(ctk.CTkFrame):
         if self.selected_file:
             file_name = self.selected_file.name
             self.file_path_label.configure(
-                text=f"Selected: {file_name}",
+                text=get_text(
+                    "file_selector.selected",
+                    "Selected: {filename}"
+                ).format(filename=file_name),
                 text_color=FLUENT_TEXT_PRIMARY,
             )
         else:
             self.file_path_label.configure(
-                text="No file selected",
+                text=get_text("file_selector.no_file", "No file selected"),
                 text_color=FLUENT_TEXT_SECONDARY,
             )
 
     def _show_error(self, message: str) -> None:
         """Show error message."""
         self.file_path_label.configure(
-            text=f"Error: {message}",
+            text=get_text(
+                "file_selector.error",
+                "Error: {message}"
+            ).format(message=message),
             text_color="#D13438",
         )
+
+    def refresh_texts(self) -> None:
+        """Refresh all texts after language change."""
+        self.title_label.configure(
+            text=get_text("file_selector.title", "Select PDF File")
+        )
+        self.instructions_label.configure(
+            text=get_text(
+                "file_selector.description",
+                "Choose a PDF file to analyze and modify table titles"
+            )
+        )
+        self.browse_button.configure(
+            text=get_text("file_selector.browse", "Browse Files")
+        )
+        self.drag_text.configure(
+            text=get_text(
+                "file_selector.drag_drop",
+                "or drag and drop your PDF file here"
+            )
+        )
+        self.format_info.configure(
+            text=get_text(
+                "file_selector.format_info",
+                "Supported format: PDF (Max 50MB)"
+            )
+        )
+        # Update file status if needed
+        self._update_display()
 
     def get_selected_file(self) -> Optional[Path]:
         """

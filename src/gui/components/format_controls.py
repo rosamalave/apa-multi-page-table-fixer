@@ -25,6 +25,7 @@ from src.utils.constants import (
     COMMON_FONT_FAMILIES,
     COMMON_FONT_SIZES,
 )
+from src.utils.i18n import get_text
 
 
 class FormatControls(ctk.CTkFrame):
@@ -66,7 +67,7 @@ class FormatControls(ctk.CTkFrame):
         # Title
         self.title_label = ctk.CTkLabel(
             title_frame,
-            text="Format Options",
+            text=get_text("format.title", "Format Options"),
             font=get_poppins_font(size=18, weight="bold"),
             text_color=FLUENT_TEXT_PRIMARY,
         )
@@ -75,7 +76,10 @@ class FormatControls(ctk.CTkFrame):
         # Subtitle
         self.subtitle_label = ctk.CTkLabel(
             self,
-            text="Customize table title formatting",
+            text=get_text(
+                "format.subtitle",
+                "Customize table title formatting"
+            ),
             font=get_poppins_font(size=12),
             text_color=FLUENT_TEXT_SECONDARY,
         )
@@ -94,7 +98,7 @@ class FormatControls(ctk.CTkFrame):
         # Label for detected format
         self.detected_format_label = ctk.CTkLabel(
             self.detected_format_frame,
-            text="Detected Format:",
+            text=get_text("format.detected_format", "Detected Format:"),
             font=get_poppins_font(size=11, weight="bold"),
             text_color=FLUENT_TEXT_PRIMARY,
         )
@@ -103,7 +107,7 @@ class FormatControls(ctk.CTkFrame):
         # Format details
         self.detected_format_details = ctk.CTkLabel(
             self.detected_format_frame,
-            text="No format detected",
+            text=get_text("format.no_format", "No format detected"),
             font=get_poppins_font(size=11),
             text_color=FLUENT_TEXT_SECONDARY,
         )
@@ -116,7 +120,7 @@ class FormatControls(ctk.CTkFrame):
         self.keep_original_var = ctk.BooleanVar(value=True)
         self.keep_original_checkbox = ctk.CTkCheckBox(
             checkbox_frame,
-            text="Keep original format",
+            text=get_text("format.keep_original", "Keep original format"),
             variable=self.keep_original_var,
             command=self._on_keep_original_changed,
             font=get_poppins_font(size=14),
@@ -127,7 +131,10 @@ class FormatControls(ctk.CTkFrame):
         # Description
         self.description_label = ctk.CTkLabel(
             checkbox_frame,
-            text="Preserve the existing formatting of table titles",
+            text=get_text(
+                "format.keep_original.desc",
+                "Preserve the existing formatting of table titles"
+            ),
             font=get_poppins_font(size=11),
             text_color=FLUENT_TEXT_SECONDARY,
         )
@@ -140,7 +147,7 @@ class FormatControls(ctk.CTkFrame):
         # Font family dropdown
         self.font_label = ctk.CTkLabel(
             self.controls_frame,
-            text="Font Family:",
+            text=get_text("format.font", "Font Family:"),
             font=get_poppins_font(size=12),
             text_color=FLUENT_TEXT_PRIMARY,
         )
@@ -168,7 +175,7 @@ class FormatControls(ctk.CTkFrame):
         # Font size dropdown
         self.size_label = ctk.CTkLabel(
             self.controls_frame,
-            text="Font Size:",
+            text=get_text("format.size", "Font Size:"),
             font=get_poppins_font(size=12),
             text_color=FLUENT_TEXT_PRIMARY,
         )
@@ -203,7 +210,7 @@ class FormatControls(ctk.CTkFrame):
         self.bold_var = ctk.BooleanVar(value=False)
         self.bold_checkbox = ctk.CTkCheckBox(
             self.style_frame,
-            text="Bold",
+            text=get_text("format.bold", "Bold"),
             variable=self.bold_var,
             state="disabled",
             command=self._on_format_option_changed,
@@ -215,7 +222,7 @@ class FormatControls(ctk.CTkFrame):
         self.italic_var = ctk.BooleanVar(value=False)
         self.italic_checkbox = ctk.CTkCheckBox(
             self.style_frame,
-            text="Italic",
+            text=get_text("format.italic", "Italic"),
             variable=self.italic_var,
             state="disabled",
             command=self._on_format_option_changed,
@@ -227,7 +234,7 @@ class FormatControls(ctk.CTkFrame):
         # Preview
         self.preview_label = ctk.CTkLabel(
             self.controls_frame,
-            text="Preview:",
+            text=get_text("format.preview", "Preview:"),
             font=get_poppins_font(size=12, weight="bold"),
             text_color=FLUENT_TEXT_PRIMARY,
         )
@@ -235,7 +242,7 @@ class FormatControls(ctk.CTkFrame):
 
         self.preview_text = ctk.CTkLabel(
             self.controls_frame,
-            text="Table Title Example",
+            text=get_text("format.preview.example", "Table Title Example"),
             font=get_poppins_font(size=11),
             text_color=FLUENT_TEXT_SECONDARY,
         )
@@ -346,23 +353,70 @@ class FormatControls(ctk.CTkFrame):
         """
         if format_info is None:
             self.detected_format_details.configure(
-                text="No format detected",
+                text=get_text("format.no_format", "No format detected"),
                 text_color=FLUENT_TEXT_SECONDARY,
             )
         else:
             # Format the display text
             format_parts = []
-            format_parts.append(f"Font: {format_info.font_name}")
+            format_parts.append(
+                get_text("format.font_label", "Font: {name}").format(
+                    name=format_info.font_name
+                )
+            )
             # Round size to 1 decimal place for display
-            format_parts.append(f"Size: {round(format_info.font_size, 1)} pt")
+            format_parts.append(
+                get_text("format.size_label", "Size: {size} pt").format(
+                    size=round(format_info.font_size, 1)
+                )
+            )
             if format_info.is_bold:
-                format_parts.append("Bold")
+                format_parts.append(get_text("format.bold", "Bold"))
             if format_info.is_italic:
-                format_parts.append("Italic")
+                format_parts.append(get_text("format.italic", "Italic"))
             
             format_text = " • ".join(format_parts)
             self.detected_format_details.configure(
                 text=format_text,
                 text_color=FLUENT_TEXT_PRIMARY,
             )
+
+    def refresh_texts(self) -> None:
+        """Refresh all texts after language change."""
+        self.title_label.configure(
+            text=get_text("format.title", "Format Options")
+        )
+        self.subtitle_label.configure(
+            text=get_text("format.subtitle", "Customize table title formatting")
+        )
+        self.detected_format_label.configure(
+            text=get_text("format.detected_format", "Detected Format:")
+        )
+        self.keep_original_checkbox.configure(
+            text=get_text("format.keep_original", "Keep original format")
+        )
+        self.description_label.configure(
+            text=get_text(
+                "format.keep_original.desc",
+                "Preserve the existing formatting of table titles"
+            )
+        )
+        self.font_label.configure(
+            text=get_text("format.font", "Font Family:")
+        )
+        self.size_label.configure(
+            text=get_text("format.size", "Font Size:")
+        )
+        self.bold_checkbox.configure(
+            text=get_text("format.bold", "Bold")
+        )
+        self.italic_checkbox.configure(
+            text=get_text("format.italic", "Italic")
+        )
+        self.preview_label.configure(
+            text=get_text("format.preview", "Preview:")
+        )
+        self.preview_text.configure(
+            text=get_text("format.preview.example", "Table Title Example")
+        )
 
