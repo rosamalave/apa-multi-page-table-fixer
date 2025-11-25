@@ -19,12 +19,14 @@ In APA style, when a table spans multiple pages, each page must show the table t
 - Page 3: `Table 1. Descriptive Title (3/3)`
 
 **Word's limitations:**
+
 - ❌ No automatic function for multi-page table numbering
 - ❌ Requires manual table splitting (breaks formatting)
 - ❌ Time-consuming and error-prone
 - ❌ Must be done page by page
 
 **This project:**
+
 - ✅ Automatically detects repeated table titles
 - ✅ Adds proper APA numbering in seconds
 - ✅ Preserves original formatting
@@ -40,6 +42,31 @@ In APA style, when a table spans multiple pages, each page must show the table t
 - **⚡ Fast Processing**: Processes entire documents in seconds
 - **🎯 APA Compliant**: Follows APA 7th edition standards
 - **🔧 Scalable**: Built to handle more APA rules that Word can't automate
+
+---
+
+## 📸 Screenshots
+
+### Vista principal para la carga, análisis y arreglo APA
+
+<div align="center">
+  <img src="docs/screenshots/mainwindow-selectpdf.png" alt="Selección de PDF" width="30%" />
+  <img src="docs/screenshots/mainwindow-analysis.png" alt="Análisis de documento" width="30%" />
+  <img src="docs/screenshots/mainwindow-format.png" alt="Configuración de formato" width="30%" />
+</div>
+
+### Historial de documentos procesados y detalles sobre su arreglo APA
+
+<div align="center">
+  <img src="docs/screenshots/changes-historialview.png" alt="Vista de historial" width="48%" />
+  <img src="docs/screenshots/changes-detailsmodifications.png" alt="Detalles de modificaciones" width="48%" />
+</div>
+
+### Help y documentación
+
+<div align="center">
+  <img src="docs/screenshots/help.png" alt="Panel de ayuda" width="70%" />
+</div>
 
 ---
 
@@ -80,9 +107,11 @@ python src/main.py
 This is an **active project** focused on solving APA formatting problems that **cannot be automated in Word**.
 
 **Current Rule:**
+
 - ✅ Multi-page table title numbering
 
 **Coming Soon:**
+
 - More APA rules that require manual work in Word
 - Additional formatting corrections
 - Batch processing for multiple documents
@@ -140,12 +169,14 @@ En estilo APA, cuando una tabla abarca múltiples páginas, cada página debe mo
 - Página 3: `Tabla 1. Título Descriptivo (3/3)`
 
 **Limitaciones de Word:**
+
 - ❌ No tiene función automática para numeración de tablas multi-página
 - ❌ Requiere división manual de tablas (rompe el formato)
 - ❌ Consume mucho tiempo y es propenso a errores
 - ❌ Debe hacerse página por página
 
 **Este proyecto:**
+
 - ✅ Detecta automáticamente títulos de tablas repetidos
 - ✅ Agrega numeración APA correcta en segundos
 - ✅ Preserva el formato original
@@ -201,9 +232,11 @@ python src/main.py
 Este es un **proyecto activo** enfocado en resolver problemas de formato APA que **no se pueden automatizar en Word**.
 
 **Regla Actual:**
+
 - ✅ Numeración de títulos de tablas multi-página
 
 **Próximamente:**
+
 - Más reglas APA que requieren trabajo manual en Word
 - Correcciones de formato adicionales
 - Procesamiento por lotes para múltiples documentos
@@ -237,4 +270,3 @@ Licencia MIT - Libre de usar para fines académicos y comerciales.
 - Construido con [CustomTkinter](https://github.com/TomSchimansky/CustomTkinter)
 - Procesamiento PDF: [pdfplumber](https://github.com/jsvine/pdfplumber) & [PyMuPDF](https://github.com/pymupdf/PyMuPDF)
 - Diseño inspirado en Microsoft Fluent Design System
-
