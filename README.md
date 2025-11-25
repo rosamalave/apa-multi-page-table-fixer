@@ -47,25 +47,25 @@ In APA style, when a table spans multiple pages, each page must show the table t
 
 ## 📸 Screenshots
 
-### Vista principal para la carga, análisis y arreglo APA
+### Main view for loading, analysis and APA formatting
 
 <div align="center">
-  <img src="docs/screenshots/mainwindow-selectpdf.png" alt="Selección de PDF" width="30%" />
-  <img src="docs/screenshots/mainwindow-analysis.png" alt="Análisis de documento" width="30%" />
-  <img src="docs/screenshots/mainwindow-format.png" alt="Configuración de formato" width="30%" />
+  <img src="docs/screenshots/mainwindow-selectpdf.png" alt="PDF Selection" width="30%" />
+  <img src="docs/screenshots/mainwindow-analysis.png" alt="Document Analysis" width="30%" />
+  <img src="docs/screenshots/mainwindow-format.png" alt="Format Configuration" width="30%" />
 </div>
 
-### Historial de documentos procesados y detalles sobre su arreglo APA
+### History of processed documents and details about their APA formatting
 
 <div align="center">
-  <img src="docs/screenshots/changes-historialview.png" alt="Vista de historial" width="48%" />
-  <img src="docs/screenshots/changes-detailsmodifications.png" alt="Detalles de modificaciones" width="48%" />
+  <img src="docs/screenshots/changes-historialview.png" alt="History View" width="48%" />
+  <img src="docs/screenshots/changes-detailsmodifications.png" alt="Modification Details" width="48%" />
 </div>
 
-### Help y documentación
+### Help and documentation
 
 <div align="center">
-  <img src="docs/screenshots/help.png" alt="Panel de ayuda" width="70%" />
+  <img src="docs/screenshots/help.png" alt="Help Panel" width="70%" />
 </div>
 
 ---
